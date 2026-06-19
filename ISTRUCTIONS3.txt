@@ -1,0 +1,55 @@
+# Descrizione del Progetto: ERDDAP Browser SPA
+
+## Panoramica
+Questo progetto è una Single Page Application (SPA) per esplorare e visualizzare dati da server ERDDAP. ERDDAP è un sistema di dati scientifici che fornisce accesso a dataset oceanografici, meteorologici e ambientali attraverso protocolli standard come OPeNDAP e ERDDAP REST API.
+
+L'applicazione utilizza Alpine.js per la gestione dello stato e dell'interattività, Leaflet per la visualizzazione di mappe interattive, e Leaflet.markercluster per gestire cluster di marker su mappe ad alta densità di dati.
+
+## Linee Guida per lo Sviluppo
+- **Tecnologie Principali**: HTML5, CSS3, JavaScript (ES6+), Alpine.js, Leaflet.
+- **Architettura**: SPA senza framework pesanti, focalizzata su prestazioni e semplicità.
+- **Stile di Codice**: Usa camelCase per variabili, commenti in italiano per chiarezza.
+- **Gestione Stato**: Utilizza Alpine.js per binding reattivo; evita manipolazioni DOM dirette.
+- **Sicurezza**: Valida tutti gli input utente; usa HTTPS per richieste API.
+- **Accessibilità**: Assicurati che l'interfaccia sia navigabile con tastiera e screen reader.
+- **Performance**: Ottimizza caricamenti di mappe e dati; usa lazy loading per risorse pesanti.
+
+## Funzionalità Principali
+- **Esplorazione Dataset**: Permette di selezionare e visualizzare dataset da server ERDDAP configurabili.
+- **Mappa Interattiva**: Visualizza posizioni geografiche dei dati con marker clusterizzati.
+- **Filtri e Query**: Supporta filtri per data, posizione e parametri specifici.
+- **Visualizzazione Dati**: Mostra tabelle, grafici e download di dati grezzi.
+- **Interfaccia Responsive**: Adatta a dispositivi mobili e desktop.
+- **Cache e Offline**: (Futuro) Supporto per cache locale di dati.
+
+## Vincoli e Limitazioni
+- **Dipendenze Esterne**: Rispetta licenze di Alpine.js, Leaflet e markercluster (MIT, BSD).
+- **Browser Supportati**: Chrome, Firefox, Safari, Edge (versioni moderne).
+- **Limiti API**: Rispetta rate limits dei server ERDDAP; gestisci errori di rete.
+- **Dimensione Dati**: Limita download a chunk ragionevoli per evitare sovraccarico.
+- **Privacy**: Non memorizza dati personali; usa solo dati pubblici da ERDDAP.
+- **Scalabilità**: Progettato per dataset piccoli-medio; ottimizza per grandi volumi.
+
+## Interfacce Utente
+- **Header**: Barra superiore con input per URL del server ERDDAP e pulsanti di controllo.
+- **Mappa Principale**: Area centrale con Leaflet map, marker e controlli zoom.
+- **Pannello Laterale**: (Se presente) Lista di dataset, filtri e opzioni.
+- **Footer**: Informazioni su copyright e link utili.
+- **Modali**: Popup per dettagli dataset, errori o conferme.
+
+## Maschere di Input
+- **URL Server ERDDAP**: Campo testo con validazione URL (es. "https://coastwatch.pfeg.noaa.gov/erddap/").
+- **Selezione Dataset**: Dropdown popolato dinamicamente da API ERDDAP.
+- **Filtri Data**: Campi data inizio/fine con validatore formato ISO.
+- **Filtri Posizione**: Input per latitudine/longitudine (range -90/90, -180/180).
+- **Parametri Personalizzati**: Campi dinamici per query specifiche (es. variabili oceaniche).
+- **Validazione**: Tutti input validati lato client; messaggi errore in italiano.
+
+## Altri Elementi Necessari
+- **Documentazione API**: Riferimenti a ERDDAP API per sviluppatori.
+- **Test**: Unit test per funzioni JavaScript; test E2E per flussi utente.
+- **Deployment**: Ospitato su server statico (GitHub Pages, Netlify); build con tool come Parcel o Vite.
+- **Manutenzione**: Aggiornamenti regolari per dipendenze; monitoraggio errori.
+- **Contributi**: Guida per contributor; issue tracker su GitHub.
+
+Questo documento serve come guida completa per un'IA o sviluppatore che lavora sul progetto, assicurando coerenza e completezza.
