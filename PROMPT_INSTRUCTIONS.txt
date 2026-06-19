@@ -1,0 +1,556 @@
+## Contenuto del file:
+
+INDICE
+- X ** Panoramica
+- 🏗️ **Architettura completa** dell'applicazione
+- 🔄 **Flussi di esecuzione** dettagliati (6 scenari)
+- ⚙️ **Tutte le 13 funzioni** con logica implementativa
+- 📊 **State management** e strutture dati
+- 🎨 **UI/UX** e stili
+- 🚀 **Note performance** e ottimizzazioni
+- 📡 **API ERDDAP** utilizzate
+- 📡 **API SENSORTHINGS** utilizzate
+- 📡 **API GEONODE/GEONE** utilizzate
+
+## 1. PANORAMICA APPLICAZIONE
+
+### Panoramica del Progetto: OPEN-IOOS Browser SPA
+Questo progetto è una Single Page Application (SPA) per esplorare e visualizzare dati da server ERDDAP, SENSORTHINGS API (FROST), GeoNode/GeoNetworks. 
+ERDDAP è un data server di dati e metadati scientifici che fornisce accesso a dataset oceanografici, meteorologici e ambientali attraverso protocolli standard come OPeNDAP e ERDDAP REST API.
+SENSORTHINGS API è un server di dati e metadati scientifici che fornisce accesso a dataset   #########################
+GEONODE/GEOSERVER è ############################################################
+
+### Tipo e Scopo
+- **Tipo:** Single Page Application (SPA) web-based
+- **Scopo:** Browser interattivo di dataset oceanografici/meteorologici da server ERDDAP (Environmental Research Division Data Access Program)
+- **Linguaggio:** HTML5 + JavaScript vanilla (no framework backend)
+- **UI Reactivity:** Alpine.js v3.x.x
+- **Mappa:** Leaflet.js v1.9.4 + Leaflet.markercluster v1.5.1
+
+### Layout GUI
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ TOP BAR (controlli)                                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│                          MAPPA LEAFLET                          │
+│                      (dataset visualizzati)                     │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│ STATUS SECTION (collassabile) - Debug info                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Interfacce Utente
+- **Header**: Barra superiore con input per URL del server ERDDAP e pulsanti di controllo.
+- **Mappa Principale**: Area centrale con Leaflet map, marker e controlli zoom.
+- **Pannello Laterale**: (Se presente) Lista di dataset, filtri e opzioni.
+- **Footer**: Informazioni su copyright e link utili.
+- **Modali**: Popup per dettagli dataset, errori o conferme.
+
+## Maschere di Input
+- **URL Server ERDDAP**: Campo testo con validazione URL (es. "https://coastwatch.pfeg.noaa.gov/erddap/").
+- **Selezione Dataset**: Dropdown popolato dinamicamente da API ERDDAP.
+- **Filtri Data**: Campi data inizio/fine con validatore formato ISO.
+- **Filtri Posizione**: Input per latitudine/longitudine (range -90/90, -180/180).
+- **Parametri Personalizzati**: Campi dinamici per query specifiche (es. variabili oceaniche).
+- **Validazione**: Tutti input validati lato client; messaggi errore in italiano.
+
+---
+
+## 2. ARCHITETTURA E STRUTTURA
+
+### Linee Guida per lo Sviluppo
+- **Tecnologie Principali**: HTML5, CSS3, JavaScript (ES6+), Alpine.js, Leaflet.
+- **Architettura**: SPA senza framework pesanti, focalizzata su prestazioni e semplicità.
+- **Stile di Codice**: Usa camelCase per variabili, commenti in italiano per chiarezza.
+- **Gestione Stato**: Utilizza Alpine.js per binding reattivo; evita manipolazioni DOM dirette.
+- **Sicurezza**: Valida tutti gli input utente; usa HTTPS per richieste API.
+- **Accessibilità**: Assicurati che l'interfaccia sia navigabile con tastiera e screen reader.
+- **Performance**: Ottimizza caricamenti di mappe e dati; usa lazy loading per risorse pesanti.
+
+### Librerie Esterne
+```javascript
+// Alpine.js (reattività)
+https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js
+L'applicazione utilizza Alpine.js per la gestione dello stato e dell'interattività, Leaflet per la visualizzazione di mappe interattive, e Leaflet.markercluster per gestire cluster di marker su mappe ad alta densità di dati.
+
+// Leaflet (mappa base)
+https://unpkg.com/leaflet@1.9.4/dist/leaflet.js
+https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
+
+// Leaflet MarkerCluster (clustering geospaziale)
+https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js
+https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.css
+https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css
+```
+
+### Componenti Funzionali
+
+#### A. Modulo Alpine.js: `erddapApp()`
+- **Funzione:** Factory che ritorna l'oggetto state/methods dell'app
+- **Binding:** `x-data="erddapApp()"` sul body
+- **Reactive Properties:** Tutte le proprietà dell'app object sono reactive
+
+### Funzionalità Principali
+- **Esplorazione Dataset**: Permette di selezionare e visualizzare dataset da server ERDDAP configurabili.
+- **Mappa Interattiva**: Visualizza posizioni geografiche dei dati con marker clusterizzati.
+- **Filtri e Query**: Supporta filtri per data, posizione e parametri specifici.
+- **Visualizzazione Dati**: Mostra tabelle, grafici e download di dati grezzi.
+- **Interfaccia Responsive**: Adatta a dispositivi mobili e desktop.
+- **Cache e Offline**: (Futuro) Supporto per cache locale di dati.
+
+## Vincoli e Limitazioni
+- **Dipendenze Esterne**: Rispetta licenze di Alpine.js, Leaflet e markercluster (MIT, BSD).
+- **Browser Supportati**: Chrome, Firefox, Safari, Edge (versioni moderne).
+- **Limiti API**: Rispetta rate limits dei server ERDDAP; gestisci errori di rete.
+- **Dimensione Dati**: Limita download a chunk ragionevoli per evitare sovraccarico.
+- **Privacy**: Non memorizza dati personali; usa solo dati pubblici da ERDDAP.
+- **Scalabilità**: Progettato per dataset piccoli-medio; ottimizza per grandi volumi.
+---
+
+## 3. STATO DELL'APPLICAZIONE
+
+### Proprietà Principali
+
+| Proprietà | Tipo | Scopo |
+|-----------|------|-------|
+| `newEndpoint` | string | Input campo per aggiungere endpoint custom |
+| `endpoints` | Array<string> | URL endpoint ERDDAP attivi |
+| `defaultEndpoints` | Array<{url,name,active}> | Endpoint predefiniti con toggle |
+| `datasets` | Array<Dataset> | Tutti i dataset caricati (unionato da tutti endpoint) |
+| `search` | string | Filtro ricerca testuale (title/ID) |
+| `filterType` | string | Filtro tipo: "", "tabledap", "griddap" |
+| `drawAreas` | boolean | Toggle: disegna bbox come rettangoli (true) o solo punti (false) |
+| `spiderfy` | boolean | Toggle: active spiderfy clustering in markerCluster |
+| `map` | L.Map | Istanza Leaflet mappa |
+| `markerClusterGroup` | L.MarkerClusterGroup | Clustering group per marker punti |
+| `areaLayerGroup` | L.LayerGroup | Layer group per rettangoli bbox |
+| `mapLayers` | {[key]: L.Marker\|L.Rectangle} | Cache layer: chiave `endpoint\|datasetID` |
+| `plotRenderTimers` | {[safeId]: TimeoutID} | Debounce timer per renderPopupPlot |
+| `plotControllers` | {[safeId]: AbortController} | Controller per fetch CSV (cancellabile) |
+| `lastMessage` | string | Messaggio status ultimo caricamento |
+| `lastResponseSnippet` | string | Preview JSON risposta ultima API |
+| `isLoggedIn` | boolean | Placeholder autenticazione (TODO) |
+| `user` | object\|null | Placeholder user info (TODO) |
+
+### Struttura Dataset Object
+
+```javascript
+{
+  datasetID: string,           // Identificativo dataset ERDDAP (unique per endpoint)
+  type: string,                // "tabledap", "griddap", o CDM type
+  title: string,               // Titolo leggibile
+  endpoint: string,            // URL endpoint sorgente
+  link: string,                // URL accesso dataset (info.html)
+  bbox: {                       // Bounding box geografico (null se non disponibile)
+    minLon: number,
+    maxLon: number,
+    minLat: number,
+    maxLat: number
+  },
+  variables: Array<string>,    // Nome variabili (lazy-loaded, esclude coordinate)
+  timeCoverage: {              // Opzionale: periodo tempo dataset
+    start: Date,
+    end: Date
+  }
+}
+```
+
+---
+
+## 4. ENDPOINT PREDEFINITI
+
+```javascript
+defaultEndpoints: [
+  { 
+    url: "https://seas-erddap.ve.ismar.cnr.it/erddap", 
+    name: "ISMAR Seas", 
+    active: false 
+  },
+  { 
+    url: "https://erddap-itineris.ve.ismar.cnr.it/erddap", 
+    name: "ISMAR Itineris", 
+    active: false 
+  },
+  { 
+    url: "https://nodc.ogs.it/erddap", 
+    name: "OGS NODC", 
+    active: false 
+  },
+  { 
+    url: "https://erddap.emodnet-physics.eu/erddap", 
+    name: "EMODnet Physics", 
+    active: false 
+  }
+]
+```
+
+---
+
+## 5. FLUSSO PRINCIPALE DI ESECUZIONE
+
+### A. INIZIALIZZAZIONE (init)
+```
+1. Crea istanza Leaflet su #map
+2. Setta bounds default (Mediterraneo: 30-55°N, -10-36°E)
+3. Aggiunge base layer "Esri World Imagery"
+4. Crea controlli:
+   - Reset button (⟲) - top-right
+   - Map type selector (◰) - top-right
+   - Zoom controls - bottom-right
+5. Crea markerClusterGroup e areaLayerGroup
+6. Registra watchers Alpine per drawAreas e spiderfy
+7. Registra event listeners mappa (zoomend, moveend)
+```
+
+### B. CARICAMENTO ENDPOINT
+```
+User: Clicca checkbox endpoint predefinito
+  ↓
+toggleEndpoint(epObj) è chiamato
+  ↓
+1. Aggiunge URL a endpoints array
+2. Chiama loadFromEndpoint(url)
+  ↓
+loadFromEndpoint(endpoint):
+  1. Fetch: GET {endpoint}/info/index.json
+  2. Estrae colonne e righe da response
+  3. Mapping colonne (case-insensitive):
+     - datasetID, title, min/max Lon/Lat
+     - tabledap, griddap, subset URL
+     - cdm_data_type, class, dataStructure
+  4. Per ogni riga:
+     - Crea Dataset object
+     - Se ha bbox: chiama addDatasetMarker() subito
+     - Altrimenti: chiama loadDatasetMetadata() async
+     - Aggiunge a datasets array
+  5. Aggiorna lastMessage con conteggio e colonne mappate
+```
+
+### C. CARICAMENTO METADATI E BBOX (Background)
+```
+loadDatasetMetadata(d):
+  1. Fetch: GET {endpoint}/info/{datasetID}/index.json
+  2. Estrae da attributi:
+     - geospatial_lon_min/max, geospatial_lat_min/max → bbox
+     - time_coverage_start/end → timeCoverage
+     - variablename → variables
+  3. Aggiorna dataset object in memoria
+  4. Chiama addDatasetMarker() per visualizzare sulla mappa
+
+loadDatasetVariables(d):
+  - Fetch metadati e estrae colonna "variablename"
+  - Filtra out: latitude, longitude, time, qualitycontrol, nc_global
+  - Salva in d.variables
+```
+
+### D. VISUALIZZAZIONE MARKER SULLA MAPPA
+```
+addDatasetMarker(d):
+  1. Se layer già esiste per key={endpoint}|{datasetID} → esce
+  2. Valida bbox
+  3. Calcola diff latitudine e longitudine
+  4. Se latDiff < 1e-6 OR lonDiff < 1e-6 OR drawAreas=false:
+     → Crea MARKER punto (divIcon rosso, 10px)
+     → Usa markerClusterGroup.addLayer()
+  5. Altrimenti (se drawAreas=true AND area valida):
+     → Crea RECTANGLE giallo (fillOpacity=0, weight=2)
+     → Usa areaLayerGroup.addLayer()
+  6. Usa buildPopupHtml() per popup content
+  7. Registra event popupopen → renderPopupPlot(d)
+  8. Se d.variables non caricato: async load + update popup
+```
+
+### E. RENDERING POPUP CON MINI-PLOT
+```
+User: Clicca su marker
+  ↓
+popupopen event trigger
+  ↓
+renderPopupPlot(d) - DEBOUNCED (160ms):
+  1. Estrae variabile:
+     - Preferisce select elemento se valorizzato
+     - Fallback: prima variabile disponibile
+  2. Estrae time coverage:
+     - Se in d.timeCoverage: usa cached
+     - Altrimenti: async fetch da metadati
+  3. Calcola time window:
+     - endDate = now (o coverage.end se < now)
+     - startDate = endDate - 7 giorni
+  4. Consente override user con date inputs
+  5. Fetch CSV: GET {endpoint}/tabledap/{datasetID}.csv
+     Query: time,{varName}&time>={start}&time<={end}
+  6. Parse CSV:
+     - Estrae indici colonne time e variabile
+     - Limita max 1000 punti dati
+     - Skip valori non numerici
+  7. Disegna CANVAS (260x120px):
+     - Grid background (grigio)
+     - Scale axis (left+bottom)
+     - Plot dots (blu) con scatter 2.5px radius
+```
+
+### F. RICERCA E FILTRAGGIO
+```
+User: Digita in input "Ricerca"
+  ↓
+search property aggiornata (reactive)
+  ↓
+Automatico: filteredDatasets() re-eseguito
+  - Confronta search in title + datasetID (case-insensitive)
+  - Applica anche filterType (tabledap/griddap)
+  - Ritorna array filtrato per dropdown
+```
+
+### G. SELEZIONE DATASET DA DROPDOWN
+```
+User: Seleziona dataset da <select>
+  ↓
+selectDatasetByOption(event):
+  1. Parse JSON dal value dell'option
+  2. Chiama focusDataset(d)
+  ↓
+focusDataset(d):
+  1. Valida bbox dimensioni
+  2. Invalida size mappa (ridisegna)
+  3. Registra listener: zoomend → openPopup()
+  4. Se punto (latDiff/lonDiff < 1e-6):
+     - setView([lat,lon], zoom=8)
+  5. Altrimenti:
+     - fitBounds(bounds, padding=[50,50])
+  6. Automaticamente apre popup dopo zoom
+```
+
+---
+
+## 6. FUNZIONI CHIAVE (Dettagli Implementativi)
+
+### `init()`
+- Setta mappa senza zoom default (zoomControl: false)
+- Aggiunge Zoom control in bottom-right
+- Reset button chiama fitBounds su default bounds
+- Map type selector come dropdown menu (Esri World Imagery / OpenStreetMap)
+- Debounce redraw on zoomend (200ms)
+- Watchers per reactive toggle: drawAreas, spiderfy
+
+### `addEndpoint()`
+- Trim input
+- Push a endpoints array
+- Reset input field
+- Chiama loadFromEndpoint async
+
+### `toggleEndpoint(epObj)`
+- Se active=true: add endpoint e load
+- Se active=false: removeDatasetsByEndpoint + rimuovi da endpoints
+
+### `removeDatasetsByEndpoint(endpoint)`
+- Filtra datasets array per excludere endpoint
+- Rimuovi tutti layer da markerClusterGroup e areaLayerGroup
+- Delete entry da mapLayers cache
+
+### `loadFromEndpoint(endpoint)`
+- Fetch GET {endpoint}/info/index.json
+- Risposta attesa: JSON con `data.table.columnNames` e `data.table.rows`
+- Mapping colonne case-insensitive (remove spaces/special)
+- Per ogni riga non-skip (skip: allDatasets, duplicati):
+  - Estrai: id, title, type, link, bbox, variables
+  - Crea Dataset object
+  - Se bbox: add marker subito
+  - Se no: async load metadati
+- Update lastMessage e lastResponseSnippet
+
+### `loadDatasetMetadata(d)`
+- Fetch GET {endpoint}/info/{datasetID}/index.json
+- Estrai bbox attributes (geospatial_lon_min/max etc.)
+- Estrai time coverage attributes
+- Estrai variables da colonna
+- Update dataset object
+- Call addDatasetMarker() se bbox trovato
+
+### `filteredDatasets()`
+- Return datasets.filter() applicando:
+  1. search text match (title OR datasetID)
+  2. filterType match (empty = all, altrimenti exact match normalizzato)
+
+### `addDatasetMarker(d)`
+- Chiave unique: `endpoint|datasetID`
+- Skip se già in mapLayers
+- Calcola bbox validity
+- Se punto O drawAreas=false:
+  - Marker divIcon (rosso 10x10)
+  - Add To markerClusterGroup
+- Se area valida AND drawAreas:
+  - Rectangle L.rectangle() (giallo, no fill)
+  - Add to areaLayerGroup
+- Popup: buildPopupHtml()
+- On popupopen: renderPopupPlot()
+- Se variables non caricato: async load + update popup
+
+### `renderPopupPlot(d)` [AVANZATO]
+- Debounce 160ms per dataset
+- Abort controller per cancellare fetch precedenti
+- Estrai variabile da select elemento in popup
+- Estrai time coverage (cached o async)
+- Dato user input date: override compute range
+- Fetch CSV da tabledap: `{endpoint}/tabledap/{datasetID}.csv?time,{var}&time>={t0}&time<={t1}`
+- Parse CSV:
+  - Header: trova indici colonne
+  - Body: max 1000 righe, estrai time e valore
+- Draw canvas (260x120):
+  - Background grid (rgba grid lines)
+  - Scale axis
+  - Scatter plot (blue dots 2.5px)
+- Cleanup controller reference
+
+### `getDatasetTimeCoverage(d)`
+- Check cache in d.timeCoverage
+- Altrimenti: async fetch metadati
+- Estrai colonne con pattern:
+  - time_coverage_start, timecoverage_start, startdate, time_start, start_time
+  - time_coverage_end, timecoverage_end, enddate, time_end, end_time, end
+- Return {start: Date, end: Date}
+
+### `buildPopupHtml(d)`
+- Header: `<b>datasetID</b><br><strong>title</strong><br><small>Tipo + Endpoint</small>`
+- Se punto (isPoint=true):
+  - Aggiungi `<div class="popup-mini-plot" id="plot_{safeId}"></div>`
+  - Aggiungi date inputs: `<input type="date" id="start_{safeId}" />`
+- Link: `<a href="{link}" target="_blank">Apri dataset</a>`
+- Variables select: `<select id="varsel_{safeId}">...</select>`
+- Return HTML string
+
+### `redrawAllMarkers()`
+- Cancella tutti layer da markerClusterGroup e areaLayerGroup
+- Clear mapLayers cache
+- Re-add datasets con batch processing (200 per volta, 40ms delay)
+- Per evitare UI blocking
+
+### `updateMarkerClusterGroup()`
+- Rimuovi vecchio markerClusterGroup
+- Crea nuovo con options (spiderfyOnMaxZoom = spiderfy toggle)
+- Re-attach layer da mapLayers dict
+
+---
+
+## 7. LOGICA DI FILTRAGGIO COLONNE ERDDAP
+
+Il parser implementa matching case-insensitive e word-boundary tolerant:
+
+```javascript
+// Normalization: lowercase + remove non-word chars
+const norm = colName.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+// Matching alternatives
+const findIdx = (alts) => {
+  for (const a of alts) {
+    const i = norm.indexOf(a.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
+// Esempi mapping:
+- "datasetID" / "dataset_id" / "dataset id" → datasetID
+- "min longitude" / "minlon" / "geospatial_lon_min" → minLongitude
+- "cdm_data_type" / "class" / "dataStructure" → type
+```
+
+---
+
+## 8. STILI E UI
+
+### Grid Layout
+```css
+#container: grid 3 colonne
+  - row 1: #top (auto height)
+  - row 2: #map-container (flex 1)
+  - row 3: #status-section (auto, max-height 150px)
+```
+
+### Colors
+- Marker punti: `#ff0000` (red)
+- Rettangoli bbox: `#ffcc00` (yellow, fillOpacity=0)
+- Plot canvas: `#005fa3` (blue dots), grid grigio
+- Mappa type control: white background
+
+### Icone Custom
+- Reset: `⟲` (U+27F2, counterclockwise arrow)
+- Map type: `◰` (U+25B0, white square)
+
+---
+
+## 9. EDGE CASES E ROBUSTNESS
+
+1. **Skip dataset speciale:** "allDatasets" filtrato
+2. **Deduplicazione:** Skip se {datasetID, endpoint} già exists
+3. **Fallback bbox:** Se colonna non trovata, ricerca async metadati
+4. **Fallback tipo:** CDM type, class, altrimenti empty string
+5. **Fallback link:** Ultimo resort `{endpoint}/info/{id}/index.html`
+6. **Punti vs Area:** Threshold 1e-6 (quasi identico)
+7. **Plot max points:** Limita a 1000 per performance canvas
+8. **CSV parse robusto:** Skip righe malformate
+9. **AbortController:** Cancella fetch precedenti per popup
+
+---
+
+## 10. TODO / FUNZIONALITÀ NON IMPLEMENTATE
+
+1. `openLoginModal()` - Placeholder, mostra alert
+2. `isLoggedIn` / `user` - Non usati
+3. Autenticazione HTTP / OAuth
+4. Persistenza locale (localStorage, IndexedDB)
+5. Export dati (CSV, JSON)
+6. Multi-dataset compare
+
+---
+
+## 11. PERFORMANCE NOTES
+
+- **Debounce plot rendering:** 160ms
+- **Batch redraw marker:** 200 per volta, 40ms delay
+- **Zoom redraw debounce:** 200ms
+- **Max CSV points:** 1000 (limita canvas render)
+- **Cluster maxClusterRadius:** 80px
+- **Canvas draw:** Simple 2D context, no libraries
+
+---
+
+## 12. COMANDI API ERDDAP UTILIZZATI
+
+### Listing endpoint
+```
+GET {endpoint}/info/index.json
+```
+Ritorna: JSON con table.columnNames, table.rows
+
+### Metadati dataset
+```
+GET {endpoint}/info/{datasetID}/index.json
+```
+Estrae attributi geospaziali e temporali
+
+### CSV data fetch
+```
+GET {endpoint}/tabledap/{datasetID}.csv?time,{variable}&time>={t0}&time<={t1}
+```
+Download dati time-series per plot
+
+---
+
+## 13. BROWSER COMPATIBILITY
+
+- Richiede: Fetch API, ES6+, Canvas 2D
+- Tested su: Chrome, Firefox, Safari (moderni)
+- No IE11 support
+
+---
+
+## 14.Altri Elementi Necessari
+- **Documentazione API**: Riferimenti a ERDDAP API per sviluppatori.
+- **Test**: Unit test per funzioni JavaScript; test E2E per flussi utente.
+- **Deployment**: Ospitato su server statico (GitHub Pages, Netlify); build con tool come Parcel o Vite.
+- **Manutenzione**: Aggiornamenti regolari per dipendenze; monitoraggio errori.
+- **Contributi**: Guida per contributor; issue tracker su GitHub.
+
+Questo documento è stato creato automaticamente dopo l'analisi completa del codice sorgente. Contiene tutto quello che ho compreso sull'architettura, funzionamento e implementazione dell'applicazione ERDDAP Browser SPA. 🎯
